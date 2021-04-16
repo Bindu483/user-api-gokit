@@ -6,7 +6,9 @@ import (
 	"errors"
 	"fmt"
 	"github.com/go-kit/kit/endpoint"
+	"google.golang.org/grpc"
 	"net/http"
+	"os"
 	"time"
 )
 import "github.com/sirupsen/logrus"
@@ -76,9 +78,11 @@ func main() {
 
 func deleteUserHandler() endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
+		etcdIp := os.Getenv("ETCD_IP")
 		cli, err := clientv3.New(clientv3.Config{
-			Endpoints:   []string{"18.156.84.154:2379"},
+			Endpoints:   []string{fmt.Sprintf("%s:2379", etcdIp)},
 			DialTimeout: 5 * time.Second,
+			DialOptions: []grpc.DialOption{grpc.WithBlock()},
 		})
 		if err != nil {
 			// handle error!
@@ -106,9 +110,11 @@ func deleteUserHandler() endpoint.Endpoint {
 
 func getUserHandler() endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
+		etcdIp := os.Getenv("ETCD_IP")
 		cli, err := clientv3.New(clientv3.Config{
-			Endpoints:   []string{"18.156.84.154:2379"},
+			Endpoints:   []string{fmt.Sprintf("%s:2379", etcdIp)},
 			DialTimeout: 5 * time.Second,
+			DialOptions: []grpc.DialOption{grpc.WithBlock()},
 		})
 		if err != nil {
 			// handle error!
@@ -148,9 +154,16 @@ func getUserHandler() endpoint.Endpoint {
 
 func listUserHandler() endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
+		etcdIp := os.Getenv("ETCD_IP")
+		logrus.Info(etcdIp)
+		if etcdIp == "" {
+			logrus.Error("etcdip was empty")
+			os.Exit(1)
+		}
 		cli, err := clientv3.New(clientv3.Config{
-			Endpoints:   []string{"18.156.84.154:2379"},
+			Endpoints:   []string{fmt.Sprintf("%s:2379", etcdIp)},
 			DialTimeout: 5 * time.Second,
+			DialOptions: []grpc.DialOption{grpc.WithBlock()},
 		})
 		if err != nil {
 			// handle error!
@@ -197,9 +210,11 @@ func listUserHandler() endpoint.Endpoint {
 
 func createUserHandle() endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
+		etcdIp := os.Getenv("ETCD_IP")
 		cli, err := clientv3.New(clientv3.Config{
-			Endpoints:   []string{"18.156.84.154:2379"},
+			Endpoints:   []string{fmt.Sprintf("%s:2379", etcdIp)},
 			DialTimeout: 5 * time.Second,
+			DialOptions: []grpc.DialOption{grpc.WithBlock()},
 		})
 		if err != nil {
 			// handle error!
@@ -238,7 +253,11 @@ func createUserHandle() endpoint.Endpoint {
 
 func welcomeHandler() endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
-		return "welcome to user-api-gokit", err
+		hostName, err := os.Hostname()
+		if err != nil {
+			logrus.WithError(err).Error("couldnot fetch hostname")
+		}
+		return "welcome to user-api-gokit " + hostName, err
 	}
 
 }
