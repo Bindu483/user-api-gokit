@@ -21,46 +21,41 @@ func main() {
 
 	router := mux.NewRouter()
 
-	router.Methods(http.MethodGet).Path("/").Handler(httptransport.NewServer(handlers.WelcomeHandler(), func(ctx context.Context, request2 *http.Request) (request interface{}, err error) {
-		return request2, nil
-	}, func(ctx context.Context, writer http.ResponseWriter, i interface{}) error {
-		msg := i.(string) //typecasting from interface to string
-		_, _ = writer.Write([]byte(msg))
-		return nil
-	}))
+	router.Methods(http.MethodGet).Path("/").
+		Handler(httptransport.
+			NewServer(handlers.WelcomeHandler(),
+				defaultRequestDecoder,
+				func(ctx context.Context, writer http.ResponseWriter, i interface{}) error {
+					msg := i.(string) //typecasting from interface to string
+					_, _ = writer.Write([]byte(msg))
+					return nil
+				}))
 
-	router.Methods(http.MethodPost).Path("/api/v1/users").Handler(httptransport.NewServer(handlers.CreateUserHandle(), func(ctx context.Context, request2 *http.Request) (request interface{}, err error) {
-		return request2, nil
-	}, func(ctx context.Context, writer http.ResponseWriter, i interface{}) error {
-		return nil
+	router.Methods(http.MethodPost).
+		Path("/api/v1/users").
+		Handler(httptransport.
+			NewServer(handlers.CreateUserHandle(),
+				defaultRequestDecoder, func(ctx context.Context, writer http.ResponseWriter, i interface{}) error {
+					return nil
+				}))
 
-	}))
+	router.Methods(http.MethodGet).
+		Path("/api/v1/users").
+		Handler(httptransport.NewServer(handlers.ListUserHandler(),
+			defaultRequestDecoder,
+			encodeByteSlice))
 
-	router.Methods(http.MethodGet).Path("/api/v1/users").Handler(httptransport.NewServer(handlers.ListUserHandler(), func(ctx context.Context, request2 *http.Request) (request interface{}, err error) {
+	router.Methods(http.MethodGet).
+		Path("/api/v1/users/{username}").
+		Handler(httptransport.NewServer(handlers.GetUserHandler(),
+			defaultRequestDecoder,
+			encodeByteSlice))
 
-		return request2, nil
-	}, func(ctx context.Context, writer http.ResponseWriter, i interface{}) error {
-		res := i.([]byte)
-		_, _ = writer.Write(res)
-		return nil
-	}))
-
-	router.Methods(http.MethodGet).Path("/api/v1/users/{username}").Handler(httptransport.NewServer(handlers.GetUserHandler(), func(ctx context.Context, request2 *http.Request) (request interface{}, err error) {
-		return request2, nil
-	}, func(ctx context.Context, writer http.ResponseWriter, i interface{}) error {
-		res := i.([]byte)
-		_, _ = writer.Write(res)
-		return nil
-	}))
-
-	router.Methods(http.MethodDelete).Path("/api/v1/users/{username}").Handler(httptransport.NewServer(handlers.DeleteUserHandler(), func(ctx context.Context, request2 *http.Request) (request interface{}, err error) {
-		return request2, nil
-	}, func(ctx context.Context, writer http.ResponseWriter, i interface{}) error {
-		res := i.([]byte)
-		_, _ = writer.Write(res)
-		return nil
-
-	}))
+	router.Methods(http.MethodDelete).Path("/api/v1/users/{username}").
+		Handler(httptransport.
+			NewServer(handlers.DeleteUserHandler(),
+				defaultRequestDecoder,
+				encodeByteSlice))
 
 	server := http.Server{
 		Addr:    "0.0.0.0:8500",
@@ -71,4 +66,14 @@ func main() {
 	if err != nil {
 		logrus.WithError(err).Error("couldnt start error")
 	}
+}
+
+func defaultRequestDecoder(ctx context.Context, request2 *http.Request) (request interface{}, err error) {
+	return request2, nil
+}
+
+func encodeByteSlice(ctx context.Context, writer http.ResponseWriter, i interface{}) error {
+	res := i.([]byte)
+	_, _ = writer.Write(res)
+	return nil
 }
