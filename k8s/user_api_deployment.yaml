@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: userapi
+  labels:
+    app: userapi
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: userapi
+  template:
+    metadata:
+      labels:
+        app: userapi
+    spec:
+      containers:
+        - name: userapi
+          image: udaykiranr/user-api:v0.0.1
+          ports:
+            - containerPort: 8500
+              protocol: TCP
+              name: userapi
+          env:
+            - name: ETCD_IP
+              value: etcd

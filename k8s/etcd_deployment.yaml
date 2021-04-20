@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: etcd
+  labels:
+    app: etcd
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: etcd
+  template:
+    metadata:
+      labels:
+        app: etcd
+    spec:
+      containers:
+        - name: etcd
+          image: quay.io/coreos/etcd:v3.2
+          command:
+            - /usr/local/bin/etcd
+            - --data-dir
+            - /root/data
+            - --listen-client-urls
+            - http://0.0.0.0:2379
+            - --advertise-client-urls
+            - http://0.0.0.0:2379
+          ports:
+            - containerPort: 2379
+              protocol: TCP
+              name: etcd
+          volumeMounts:
+            - mountPath: /root/data
+              name: etcd-data
+      volumes:
+        - name: etcd-data
+          persistentVolumeClaim:
+            claimName: etcd-data-pvc
